@@ -1,0 +1,7 @@
+project_id = "lwzdcyhtwcstfnmqsgng"
+
+[functions.google-calendar-oauth]
+verify_jwt = false
+
+[functions.google-calendar-sync]
+verify_jwt = false
