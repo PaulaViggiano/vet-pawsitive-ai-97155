@@ -245,6 +245,7 @@ serve(async (req) => {
       const params = new URLSearchParams({
         timeMin: startDate || new Date().toISOString(),
         timeMax: endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // +30 days
+        maxResults: '2500',
         singleEvents: 'true',
         orderBy: 'startTime',
       });

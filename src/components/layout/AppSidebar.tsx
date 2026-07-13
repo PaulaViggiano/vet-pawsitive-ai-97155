@@ -29,6 +29,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from "@/hooks/useProfile";
 
 const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -46,10 +47,11 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const { profile } = useProfile();
   const currentPath = location.pathname;
   const isCollapsed = state === "collapsed";
 
-  const userDisplayName = user?.email?.split('@')[0] || 'Usuario';
+  const userDisplayName = profile?.full_name || user?.email?.split('@')[0] || 'Usuario';
   const userInitials = userDisplayName.slice(0, 2).toUpperCase();
 
   const isActive = (path: string) => {

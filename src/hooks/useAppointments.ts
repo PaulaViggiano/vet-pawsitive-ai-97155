@@ -121,7 +121,7 @@ export function useAppointments() {
 
       // Fetch events for a wide date range (past 6 months to future 12 months)
       const startDate = new Date();
-      startDate.setMonth(startDate.getMonth() - 6);
+      startDate.setMonth(startDate.getMonth() - 1);
       
       const endDate = new Date();
       endDate.setMonth(endDate.getMonth() + 12);
