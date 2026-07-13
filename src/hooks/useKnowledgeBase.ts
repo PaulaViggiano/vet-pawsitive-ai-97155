@@ -61,7 +61,7 @@ export function useKnowledgeBase() {
       setIsSaving(true);
       const { data, error } = await supabase
         .from('knowledge_base')
-        .insert([entryData])
+        .insert([{...entryData, user_id: user.id }])
         .select()
         .single();
 
