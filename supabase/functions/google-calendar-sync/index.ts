@@ -52,6 +52,11 @@ serve(async (req) => {
       });
 
       const refreshData = await refreshResponse.json();
+      if (!refreshResponse.ok || refreshData.error || !refreshData.access_token) {
+        throw new Error (
+          `Falto el refresh token  de Google: ${refreshData.error || refreshResponse.status} ${refreshData.error_description || ''}`
+        );
+      }
       accessToken = refreshData.access_token;
       
       const newExpiry = new Date(Date.now() + (refreshData.expires_in * 1000));
