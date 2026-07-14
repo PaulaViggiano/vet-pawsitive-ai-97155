@@ -6,6 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const TIMEZONE = 'America/Argentina/Buenos_Aires';
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -13,12 +15,12 @@ serve(async (req) => {
 
   try {
     const { action, appointmentId, appointmentData, userId, startDate, endDate } = await req.json();
-    
+
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_CLIENT_ID');
     const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_CLIENT_SECRET');
-    
+
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
     // Get user's Google Calendar tokens
@@ -38,7 +40,7 @@ serve(async (req) => {
     // Refresh token if expired
     let accessToken = tokenData.access_token;
     const tokenExpiry = new Date(tokenData.token_expiry);
-    
+
     if (tokenExpiry <= new Date()) {
       const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
@@ -52,30 +54,31 @@ serve(async (req) => {
       });
 
       const refreshData = await refreshResponse.json();
+
       if (!refreshResponse.ok || refreshData.error || !refreshData.access_token) {
-        throw new Error (
-          `Falto el refresh token  de Google: ${refreshData.error || refreshResponse.status} ${refreshData.error_description || ''}`
+        throw new Error(
+          `Fallo el refresh del token de Google: ${refreshData.error || refreshResponse.status} ${refreshData.error_description || ''}`
         );
       }
+
       accessToken = refreshData.access_token;
-      
+
       const newExpiry = new Date(Date.now() + (refreshData.expires_in * 1000));
-      
+
       await supabase
         .from('google_calendar_tokens')
-        .update({ 
+        .update({
           access_token: accessToken,
-          token_expiry: newExpiry.toISOString() 
+          token_expiry: newExpiry.toISOString()
         })
         .eq('user_id', userId);
     }
 
     // Perform the requested action
     if (action === 'create') {
-      // Validate time range
       const startTime = new Date(appointmentData.start_time);
       const endTime = new Date(appointmentData.end_time);
-      
+
       if (endTime <= startTime) {
         return new Response(
           JSON.stringify({ error: 'La hora de fin debe ser posterior a la hora de inicio' }),
@@ -83,16 +86,14 @@ serve(async (req) => {
         );
       }
 
-      // Build event title with patient info
       let eventTitle = appointmentData.title;
       if (appointmentData.patient_name) {
         eventTitle = `Cita: ${appointmentData.patient_name} - ${appointmentData.title}`;
       }
 
-      // Build event description with all details
       let eventDescription = appointmentData.description || '';
       const detailsParts = [];
-      
+
       if (appointmentData.patient_name) {
         detailsParts.push(`🐾 Mascota: ${appointmentData.patient_name}`);
       }
@@ -105,7 +106,7 @@ serve(async (req) => {
       if (appointmentData.veterinarian) {
         detailsParts.push(`👨‍⚕️ Veterinario: ${appointmentData.veterinarian}`);
       }
-      
+
       if (detailsParts.length > 0) {
         eventDescription = detailsParts.join('\n') + (eventDescription ? '\n\n' + eventDescription : '');
       }
@@ -115,11 +116,11 @@ serve(async (req) => {
         description: eventDescription,
         start: {
           dateTime: appointmentData.start_time,
-          timeZone: 'America/Mexico_City',
+          timeZone: TIMEZONE,
         },
         end: {
           dateTime: appointmentData.end_time,
-          timeZone: 'America/Mexico_City',
+          timeZone: TIMEZONE,
         },
       };
 
@@ -136,12 +137,11 @@ serve(async (req) => {
       );
 
       const createdEvent = await response.json();
-      
+
       if (createdEvent.error) {
         throw new Error(createdEvent.error.message);
       }
 
-      // Update appointment with Google Calendar event ID
       await supabase
         .from('appointments')
         .update({ google_calendar_event_id: createdEvent.id })
@@ -162,16 +162,14 @@ serve(async (req) => {
         throw new Error('No Google Calendar event ID found');
       }
 
-      // Build event title with patient info
       let eventTitle = appointmentData.title;
       if (appointmentData.patient_name) {
         eventTitle = `Cita: ${appointmentData.patient_name} - ${appointmentData.title}`;
       }
 
-      // Build event description with all details
       let eventDescription = appointmentData.description || '';
       const detailsParts = [];
-      
+
       if (appointmentData.patient_name) {
         detailsParts.push(`🐾 Mascota: ${appointmentData.patient_name}`);
       }
@@ -184,7 +182,7 @@ serve(async (req) => {
       if (appointmentData.veterinarian) {
         detailsParts.push(`👨‍⚕️ Veterinario: ${appointmentData.veterinarian}`);
       }
-      
+
       if (detailsParts.length > 0) {
         eventDescription = detailsParts.join('\n') + (eventDescription ? '\n\n' + eventDescription : '');
       }
@@ -194,11 +192,11 @@ serve(async (req) => {
         description: eventDescription,
         start: {
           dateTime: appointmentData.start_time,
-          timeZone: 'America/Mexico_City',
+          timeZone: TIMEZONE,
         },
         end: {
           dateTime: appointmentData.end_time,
-          timeZone: 'America/Mexico_City',
+          timeZone: TIMEZONE,
         },
       };
 
@@ -215,7 +213,7 @@ serve(async (req) => {
       );
 
       const updatedEvent = await response.json();
-      
+
       if (updatedEvent.error) {
         throw new Error(updatedEvent.error.message);
       }
@@ -246,10 +244,9 @@ serve(async (req) => {
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     } else if (action === 'list') {
-      // Fetch events from Google Calendar
       const params = new URLSearchParams({
         timeMin: startDate || new Date().toISOString(),
-        timeMax: endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // +30 days
+        timeMax: endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         maxResults: '2500',
         singleEvents: 'true',
         orderBy: 'startTime',
@@ -267,7 +264,7 @@ serve(async (req) => {
       );
 
       const eventsData = await response.json();
-      
+
       if (eventsData.error) {
         throw new Error(eventsData.error.message);
       }
