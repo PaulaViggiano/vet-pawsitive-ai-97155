@@ -66,6 +66,9 @@ export default {
           "background-subtle": "hsl(var(--vet-background-subtle))",
         },
       },
+      fontFamily: {
+        sans: ['Nunito', 'system-ui', 'sans-serif'],
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
