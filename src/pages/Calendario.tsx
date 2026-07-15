@@ -71,7 +71,7 @@ export default function Calendario() {
 
   return (
     <div className="h-full w-full flex flex-col">
-      <div className="flex-none px-8 py-6 border-b border-border bg-card/50">
+      <div className="flex-none px-4 py-4 md:px-8 md:py-6 border-b border-border bg-card/50">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Calendario</h1>
