@@ -99,11 +99,6 @@ export function AppSidebar() {
                 <p className="text-sm font-medium text-purple-800 truncate">
                   ¡Hola, {userDisplayName}!
                 </p>
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 border-purple-200">
-                    Veterinario
-                  </Badge>
-                </div>
               </div>
             </div>
           </div>
