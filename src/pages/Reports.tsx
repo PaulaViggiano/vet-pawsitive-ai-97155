@@ -178,9 +178,9 @@ export default function Reports() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Reportes y Estadísticas</h1>
-          <p className="text-muted-foreground">
-            Análisis detallado del rendimiento de tu clínica veterinaria
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Reportes y Estadísticas</h1>
+          <p className="text-muted-foreground mt-1 text-sm md:text-lg capitalize">
+            
           </p>
         </div>
         <div className="flex gap-3">

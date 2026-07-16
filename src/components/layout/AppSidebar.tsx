@@ -75,10 +75,10 @@ export function AppSidebar() {
           
           {!isCollapsed && (
             <div className="flex items-center gap-2">
-              <img src="/2.jpg" alt="VetMed" className="w-10 h-10 rounded-lg object-contain" />
+              <img src="/2.jpg" alt="FeliVet" className="w-10 h-10 rounded-lg object-contain" />
               <div>
-                <h2 className="text-lg font-bold text-cyan-700">
-                  VetMed
+                <h2 className="text-lg font-bold text-primary">
+                  FeliVet
                 </h2>
               </div>
             </div>

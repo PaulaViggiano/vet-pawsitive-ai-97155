@@ -74,8 +74,8 @@ export default function Calendario() {
       <div className="flex-none px-4 py-4 md:px-8 md:py-6 border-b border-border bg-card/50">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Calendario</h1>
-            <p className="text-muted-foreground mt-2">Gestiona tus citas y eventos veterinarios</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Calendario</h1>
+            <p className="text-muted-foreground mt-1 text-sm md:text-lg capitalize">Gestiona tus citas</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <a

@@ -11,7 +11,6 @@ import {
   BarChart3,
   Stethoscope,
   CalendarDays,
-  AlertCircle,
   Bell,
   ArrowRight,
   TrendingUp
@@ -92,9 +91,9 @@ export default function Dashboard() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard Veterinario</h1>
-            <p className="text-muted-foreground mt-2 text-lg">
-              Panel de control veterinario - {currentDate}
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">Dashboard</h1>
+            <p className="text-muted-foreground mt-1 text-sm md:text-lg capitalize">
+              {currentDate}
             </p>
           </div>
           <div className="flex items-center gap-4">
@@ -123,7 +122,7 @@ export default function Dashboard() {
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Eventos del Día</p>
                   <p className="text-2xl lg:text-3xl font-bold text-foreground">
-                    {isLoading ? '...' : stats.todayAppointments}
+                    {isLoading ? '...' : todayAppointments.length}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">Sincronizado con calendario</p>
                 </div>
@@ -221,10 +220,10 @@ export default function Dashboard() {
                   {todayAppointments.map((apt) => (
                     <div 
                       key={apt.id} 
-                      className="flex items-start gap-3 p-3 rounded-lg border border-border/50 hover:bg-muted/30 transition-colors cursor-pointer"
+                      className="flex flex-wrap items-start gap-2 md:gap-3 p-3 rounded-lg border border-border/50 hover:bg-muted/30 transition-colors cursor-pointer"
                       onClick={() => navigate('/calendario')}
                     >
-                      <div className="flex-shrink-0 w-16 text-center">
+                      <div className="flex-shrink-0 w-12 text-left">
                         <div className="text-xs text-muted-foreground">
                           {format(parseISO(apt.start_time), 'HH:mm')}
                         </div>
@@ -312,12 +311,12 @@ export default function Dashboard() {
                 <CardTitle className="text-lg font-semibold">Vista Semanal</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-7 gap-2">
+                <div className="grid grid-cols-7 gap-1 md:gap-2">
                   {weekDays.map((day, idx) => (
                     <div
                       key={idx}
                       className={`
-                        p-3 rounded-lg text-center cursor-pointer transition-all
+                        p-1.5 md:p-3 rounded-lg text-center cursor-pointer transition-all
                         ${day.isToday 
                           ? 'bg-primary text-primary-foreground shadow-md' 
                           : day.appointmentsCount > 0
@@ -327,8 +326,8 @@ export default function Dashboard() {
                       `}
                       onClick={() => navigate('/calendario')}
                     >
-                      <div className="text-xs font-medium mb-1">{day.dayName}</div>
-                      <div className={`text-lg font-bold ${day.isToday ? '' : 'text-foreground'}`}>
+                      <div className="text-[10px] md:text-xs font-medium mb-1">{day.dayName}</div>
+                      <div className={`text-sm md:text-lg font-bold ${day.isToday ? '' : 'text-foreground'}`}>
                         {day.dayNumber}
                       </div>
                       {day.appointmentsCount > 0 && (
@@ -456,26 +455,6 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
-
-        {/* Need Help section */}
-        <Card className="bg-gradient-to-r from-purple-500/10 to-purple-600/20 border-0">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-lg mb-1">¿Necesitas ayuda?</h3>
-                <p className="text-sm text-muted-foreground">Contacta con nuestro equipo de soporte</p>
-              </div>
-              <Button 
-                variant="outline" 
-                className="bg-white"
-                onClick={() => window.location.href = 'mailto:info@patagoniasolutions.tech'}
-              >
-                <AlertCircle className="h-4 w-4 mr-2" />
-                Contactar
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

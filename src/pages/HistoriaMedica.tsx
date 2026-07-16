@@ -130,8 +130,8 @@ export default function HistoriaMedica() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Historia Médica</h1>
-          <p className="text-muted-foreground">Gestiona los registros médicos de los pacientes</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Historia Médica</h1>
+          
         </div>
         <Button onClick={handleCreateNew} className="bg-vet-primary hover:bg-vet-primary/90">
           <Plus className="h-4 w-4 mr-2" />

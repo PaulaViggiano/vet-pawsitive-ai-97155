@@ -101,8 +101,8 @@ export default function Duenos() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Dueños</h1>
-          <p className="text-muted-foreground">Gestiona la información de los dueños y sus mascotas</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Dueños</h1>
+          <p className="text-muted-foreground mt-1 text-sm md:text-lg capitalize">Gestiona la información</p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="text-lg px-4 py-2">
