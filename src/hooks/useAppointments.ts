@@ -173,13 +173,15 @@ export function useAppointments() {
         patientName = patient?.nombre || '';
       }
 
-      if (appointmentData.owner_id) {
+      let ownerPhone = '';
+       if (appointmentData.owner_id) {
         const { data: owner } = await supabase
           .from('owners')
-          .select('name')
+          .select('name, phone')
           .eq('id', appointmentData.owner_id)
           .single();
         ownerName = owner?.name || '';
+        ownerPhone = owner?.phone || '';
       }
 
       const { data, error } = await supabase.functions.invoke('google-calendar-sync', {
@@ -193,6 +195,7 @@ export function useAppointments() {
             end_time: appointmentData.end_time,
             patient_name: patientName,
             owner_name: ownerName,
+            owner_phone: ownerPhone,
             type: appointmentData.type,
             veterinarian: appointmentData.veterinarian,
           }

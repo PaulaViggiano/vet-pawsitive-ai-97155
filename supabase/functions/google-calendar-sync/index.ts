@@ -7,6 +7,37 @@ const corsHeaders = {
 };
 
 const TIMEZONE = 'America/Argentina/Buenos_Aires';
+const CLINIC_ADDRESS = 'Calle Río Desaguadero 935, Barrio Santa Genoveva';
+
+function armarEvento(appointmentData: any) {
+  let eventTitle = appointmentData.title;
+  if (appointmentData.patient_name && appointmentData.owner_name) {
+    eventTitle = `Consulta dermatológica: ${appointmentData.patient_name} de ${appointmentData.owner_name}`;
+  }
+
+  const descParts: string[] = [];
+  if (appointmentData.owner_phone) {
+    descParts.push(`Teléfono: ${appointmentData.owner_phone}`);
+  }
+  descParts.push(`Motivo: ${appointmentData.title}`);
+  if (appointmentData.description) {
+    descParts.push(appointmentData.description);
+  }
+
+  return {
+    summary: eventTitle,
+    description: descParts.join('\n'),
+    location: CLINIC_ADDRESS,
+    start: {
+      dateTime: appointmentData.start_time,
+      timeZone: TIMEZONE,
+    },
+    end: {
+      dateTime: appointmentData.end_time,
+      timeZone: TIMEZONE,
+    },
+  };
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -23,7 +54,7 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
-    // Get user's Google Calendar tokens
+    // ── 1. Buscar los tokens de Google Calendar del usuario ──────────────
     const { data: tokenData, error: tokenError } = await supabase
       .from('google_calendar_tokens')
       .select('*')
@@ -37,7 +68,7 @@ serve(async (req) => {
       );
     }
 
-    // Refresh token if expired
+    // ── 2. Refrescar el token si venció ──────────────────────────────────
     let accessToken = tokenData.access_token;
     const tokenExpiry = new Date(tokenData.token_expiry);
 
@@ -69,12 +100,13 @@ serve(async (req) => {
         .from('google_calendar_tokens')
         .update({
           access_token: accessToken,
-          token_expiry: newExpiry.toISOString()
+          token_expiry: newExpiry.toISOString(),
         })
         .eq('user_id', userId);
     }
 
-    // Perform the requested action
+    // ── 3. Ejecutar la acción pedida ─────────────────────────────────────
+
     if (action === 'create') {
       const startTime = new Date(appointmentData.start_time);
       const endTime = new Date(appointmentData.end_time);
@@ -86,43 +118,7 @@ serve(async (req) => {
         );
       }
 
-      let eventTitle = appointmentData.title;
-      if (appointmentData.patient_name) {
-        eventTitle = `Cita: ${appointmentData.patient_name} - ${appointmentData.title}`;
-      }
-
-      let eventDescription = appointmentData.description || '';
-      const detailsParts = [];
-
-      if (appointmentData.patient_name) {
-        detailsParts.push(`🐾 Mascota: ${appointmentData.patient_name}`);
-      }
-      if (appointmentData.owner_name) {
-        detailsParts.push(`👤 Dueño: ${appointmentData.owner_name}`);
-      }
-      if (appointmentData.type) {
-        detailsParts.push(`📋 Tipo: ${appointmentData.type}`);
-      }
-      if (appointmentData.veterinarian) {
-        detailsParts.push(`👨‍⚕️ Veterinario: ${appointmentData.veterinarian}`);
-      }
-
-      if (detailsParts.length > 0) {
-        eventDescription = detailsParts.join('\n') + (eventDescription ? '\n\n' + eventDescription : '');
-      }
-
-      const event = {
-        summary: eventTitle,
-        description: eventDescription,
-        start: {
-          dateTime: appointmentData.start_time,
-          timeZone: TIMEZONE,
-        },
-        end: {
-          dateTime: appointmentData.end_time,
-          timeZone: TIMEZONE,
-        },
-      };
+      const event = armarEvento(appointmentData);
 
       const response = await fetch(
         `https://www.googleapis.com/calendar/v3/calendars/${tokenData.calendar_id}/events`,
@@ -142,15 +138,18 @@ serve(async (req) => {
         throw new Error(createdEvent.error.message);
       }
 
-      await supabase
-        .from('appointments')
-        .update({ google_calendar_event_id: createdEvent.id })
-        .eq('id', appointmentId);
+      if (appointmentId) {
+        await supabase
+          .from('appointments')
+          .update({ google_calendar_event_id: createdEvent.id })
+          .eq('id', appointmentId);
+      }
 
       return new Response(
         JSON.stringify({ success: true, eventId: createdEvent.id }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+
     } else if (action === 'update') {
       const { data: appointment } = await supabase
         .from('appointments')
@@ -162,43 +161,7 @@ serve(async (req) => {
         throw new Error('No Google Calendar event ID found');
       }
 
-      let eventTitle = appointmentData.title;
-      if (appointmentData.patient_name) {
-        eventTitle = `Cita: ${appointmentData.patient_name} - ${appointmentData.title}`;
-      }
-
-      let eventDescription = appointmentData.description || '';
-      const detailsParts = [];
-
-      if (appointmentData.patient_name) {
-        detailsParts.push(`🐾 Mascota: ${appointmentData.patient_name}`);
-      }
-      if (appointmentData.owner_name) {
-        detailsParts.push(`👤 Dueño: ${appointmentData.owner_name}`);
-      }
-      if (appointmentData.type) {
-        detailsParts.push(`📋 Tipo: ${appointmentData.type}`);
-      }
-      if (appointmentData.veterinarian) {
-        detailsParts.push(`👨‍⚕️ Veterinario: ${appointmentData.veterinarian}`);
-      }
-
-      if (detailsParts.length > 0) {
-        eventDescription = detailsParts.join('\n') + (eventDescription ? '\n\n' + eventDescription : '');
-      }
-
-      const event = {
-        summary: eventTitle,
-        description: eventDescription,
-        start: {
-          dateTime: appointmentData.start_time,
-          timeZone: TIMEZONE,
-        },
-        end: {
-          dateTime: appointmentData.end_time,
-          timeZone: TIMEZONE,
-        },
-      };
+      const event = armarEvento(appointmentData);
 
       const response = await fetch(
         `https://www.googleapis.com/calendar/v3/calendars/${tokenData.calendar_id}/events/${appointment.google_calendar_event_id}`,
@@ -222,6 +185,7 @@ serve(async (req) => {
         JSON.stringify({ success: true }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+
     } else if (action === 'delete') {
       const { data: appointment } = await supabase
         .from('appointments')
@@ -243,6 +207,7 @@ serve(async (req) => {
         JSON.stringify({ success: true }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
+
     } else if (action === 'list') {
       const params = new URLSearchParams({
         timeMin: startDate || new Date().toISOString(),

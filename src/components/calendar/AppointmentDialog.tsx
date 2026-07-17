@@ -50,6 +50,7 @@ export function AppointmentDialog({
   const { mascotas } = useMascotas();
   const { owners } = useOwners();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(defaultDate);
   const [formData, setFormData] = useState({
     title: "",
@@ -64,7 +65,7 @@ export function AppointmentDialog({
     owner_id: "",
     modalidad: "presencial" as "presencial" | "virtual",
   });
-
+  
   // Horarios permitidos: 8:00 - 21:00 en intervalos de 30min
   const AVAILABLE_HOURS = [
     "8:00", "8:30", "9:00", "9:30", "10:00", "10:30",
@@ -136,11 +137,7 @@ export function AppointmentDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validar que se haya seleccionado una mascota
-    if (!formData.patient_id) {
-      alert("Por favor selecciona una mascota para la cita");
-      return;
-    }
+    if (isSubmitting) return;
 
     // Validar día laborable
     if (!isWeekday(selectedDate)) {
@@ -158,7 +155,6 @@ export function AppointmentDialog({
     const endTime = new Date(selectedDate);
     endTime.setHours(endHour, endMinute, 0, 0);
 
-    // Validate that end time is after start time
     if (endTime <= startTime) {
       alert("La hora de fin debe ser posterior a la hora de inicio");
       return;
@@ -178,13 +174,21 @@ export function AppointmentDialog({
       modalidad: formData.modalidad,
     };
 
-    if (appointment) {
-      await updateAppointment(appointment.id, appointmentData);
-    } else {
-      await createAppointment(appointmentData);
+    setIsSubmitting(true);
+    try {
+      if (appointment) {
+        await updateAppointment(appointment.id, appointmentData);
+      } else {
+        await createAppointment(appointmentData);
+      }
+      // Solo cerramos el diálogo si el guardado salió bien
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error al guardar la cita:", error);
+      alert("No se pudo guardar la cita. Intentá de nuevo.");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    onOpenChange(false);
   };
 
   const handleDelete = async () => {
@@ -229,7 +233,7 @@ export function AppointmentDialog({
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="patient_id">Mascota *</Label>
+                  <Label htmlFor="patient_id">Mascota (opcional)</Label>
                   <Combobox
                     options={mascotas.map((mascota) => ({
                       value: mascota.id,
@@ -239,9 +243,9 @@ export function AppointmentDialog({
                     onValueChange={(value) => setFormData({ ...formData, patient_id: value })}
                     placeholder="Buscar mascota..."
                     searchPlaceholder="Buscar por nombre..."
-                    emptyMessage="No hay mascotas registradas"
+                    emptyMessage="No hay mascotas registradas — crear cita igual"
                   />
-                  <p className="text-xs text-muted-foreground">Selecciona la mascota para la cita</p>
+                  <p className="text-xs text-muted-foreground">Si la mascota no está registrada, incluí su nombre en el título de la cita</p>
                 </div>
 
                 <div className="grid gap-2">
@@ -418,7 +422,9 @@ export function AppointmentDialog({
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                   Cancelar
                 </Button>
-                <Button type="submit">{appointment ? "Guardar Cambios" : "Crear Cita"}</Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Guardando..." : appointment ? "Guardar Cambios" : "Crear Cita"}
+                </Button>
               </div>
             </DialogFooter>
           </form>
